@@ -1,5 +1,6 @@
 library(rjson)
 library(shiny)
+library(ggplot2)
 
 GetPatches <- function (){
   vers_url <- "https://ddragon.leagueoflegends.com/api/versions.json"
@@ -15,25 +16,39 @@ GetPatchData <- function (patch) {
     data <- data[['data']]
 }
 
-GetChamps <- function (data) {
-  champs <- names(data)
-}
-  
-GetChampStats <- function (data,champ) {
-  champ_stats <- data[[champ]][['stats']]
+GetChampData <- function (patchdata) {
+  # Empty data frame to be populated.
+  champdata <- data.frame(champ = character(), category = character(), vlaue = numeric())
+  print(champdata)
+  # Populate data empty data frame. 
+  for (i in patchdata) {
+    # Create vector of champ's name same length as number of categories.
+    champ <- rep(i$name, length(i$stats))
+    # Create vectors of stat categories and values.
+    value <- i$stats
+    category <- names(i$stats)
+    # Bind columns together.
+    x <- as.data.frame(cbind(champ,category,value))
+    # Clear out superfluos names.
+    row.names(x) <- c()
+    # Bind rows to final data frame to complete construction.
+    champdata <- rbind(champdata,x)
+  }
+  champdata$champ <- unlist(champdata$champ)
+  champdata$category <- unlist(champdata$category)
+  champdata$value <- unlist(champdata$value)
+  champdata
 }
 
 patches <- GetPatches()
-data <- GetPatchData(patches[1])
-champs <- GetChamps(data)
-
-
+currentpatch <- GetPatchData(patches[1])
+champs <-  names(currentpatch)
 
 ui <- fluidPage(
   selectInput(inputId = "patch",
               label = "Patch",
               choices = patches),
-  
+
   selectInput(inputId = "champ1",
               label = "Champion 1",
               choices = champs),
@@ -41,26 +56,20 @@ ui <- fluidPage(
   selectInput(inputId = "champ2",
               label = "Champion 2",
               choices = champs),
-  
-  plotOutput(outputId = "stats1"),
-  plotOutput(outputId = "stats2")
+
+  plotOutput(outputId = "stats")
 )
 
 server <- function (input, output) {
-  df1 <- reactive({
-    stats <- GetChampStats(data, input$champ1)
-    stats <- unlist(stats)
+  df <- reactive({
+    patchdata <- GetPatchData(input$patch)
+    champdata <- GetChampData(patchdata)
+    champdata <- champdata[champdata$champ == input$champ1 | 
+                             champdata$champ == input$champ2,]
   })
-  df2 <- reactive({
-    stats <- GetChampStats(data, input$champ2)
-    stats <- unlist(stats)
-  })
-  
-  output$stats1 <- renderPlot({
-    plot(df1())
-  })
-  output$stats2 <- renderPlot({
-    plot(df2())
+  output$stats <- renderPlot({
+    ggplot(data = df(), aes(category,value, shape = champ, color = champ)) + 
+      geom_point(size = 5)
   })
 }
 
