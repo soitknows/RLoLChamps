@@ -19,24 +19,27 @@ GetPatchData <- function (patch) {
 GetChampData <- function (patchdata) {
   # Empty data frame to be populated.
   champdata <- data.frame(champ = character(), category = character(), vlaue = numeric())
-  print(champdata)
   # Populate data empty data frame. 
   for (i in patchdata) {
-    # Create vector of champ's name same length as number of categories.
+    # Create vector of champ's name that is same length as number of categories.
     champ <- rep(i$name, length(i$stats))
     # Create vectors of stat categories and values.
-    value <- i$stats
     category <- names(i$stats)
+    value <- i$stats
+    # Create vector of log transformations of stat values because stat orders of magnitued car vary greatly.
+    normalized <- sapply(value, function(i) { log10(i + 10) })
+    #normalized <- sapply(normalized, log10)
     # Bind columns together.
-    x <- as.data.frame(cbind(champ,category,value))
-    # Clear out superfluos names.
-    row.names(x) <- c()
+    newdata <- as.data.frame(cbind(champ, category, value, normalized))
+    # Clear out superfluos names not needed in data frame.  
+    row.names(newdata) <- c()
     # Bind rows to final data frame to complete construction.
-    champdata <- rbind(champdata,x)
+    champdata <- rbind(champdata, newdata)
   }
   champdata$champ <- unlist(champdata$champ)
   champdata$category <- unlist(champdata$category)
   champdata$value <- unlist(champdata$value)
+  champdata$normalized <- unlist(champdata$normalized)
   champdata
 }
 
@@ -68,8 +71,18 @@ server <- function (input, output) {
                              champdata$champ == input$champ2,]
   })
   output$stats <- renderPlot({
-    ggplot(data = df(), aes(category,value, shape = champ, color = champ)) + 
-      geom_point(size = 5)
+    ggplot(data = df(), aes(category, normalized, shape = champ, color = champ, group = champ)) + 
+      geom_point(size = 5) +
+      geom_line() +
+      theme(axis.text.x  = element_text(angle=50, vjust=0.5, size=12)) +
+      scale_x_discrete(breaks=c(unique(df()$category)),
+                       labels=c("Health", "Health / Level", "Mana Pool", 
+                                "Mana Pool / Level","Move Speed", "Armor", 
+                                "Armor / Level", "Spellblock", "Spellblock / Level",
+                                "Range", "Health Regen", "Health Regen / Level", 
+                                "Mana Regen", "Mana Regen / Level", "Crit", 
+                                "Crit / Level", "Attack Damage", "Attack Damage / Level", 
+                                "Attack Speed Offset", "Attack Speed / Level"))
   })
 }
 
