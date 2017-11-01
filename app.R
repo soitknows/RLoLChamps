@@ -60,7 +60,8 @@ ui <- fluidPage(
               label = "Champion 2",
               choices = champs),
 
-  plotOutput(outputId = "stats")
+  plotOutput(outputId = "stats_orig"),
+  plotOutput(outputId = "stats_log")
 )
 
 server <- function (input, output) {
@@ -70,7 +71,21 @@ server <- function (input, output) {
     champdata <- champdata[champdata$champ == input$champ1 | 
                              champdata$champ == input$champ2,]
   })
-  output$stats <- renderPlot({
+  output$stats_orig <- renderPlot({
+    ggplot(data = df(), aes(category, value, shape = champ, color = champ, group = champ)) + 
+      geom_point(size = 5) +
+      geom_line() +
+      theme(axis.text.x  = element_text(angle=50, vjust=0.5, size=12)) +
+      scale_x_discrete(breaks=c(unique(df()$category)),
+                       labels=c("Health", "Health / Level", "Mana Pool", 
+                                "Mana Pool / Level","Move Speed", "Armor", 
+                                "Armor / Level", "Spellblock", "Spellblock / Level",
+                                "Range", "Health Regen", "Health Regen / Level", 
+                                "Mana Regen", "Mana Regen / Level", "Crit", 
+                                "Crit / Level", "Attack Damage", "Attack Damage / Level", 
+                                "Attack Speed Offset", "Attack Speed / Level"))
+  })
+  output$stats_log <- renderPlot({
     ggplot(data = df(), aes(category, normalized, shape = champ, color = champ, group = champ)) + 
       geom_point(size = 5) +
       geom_line() +
