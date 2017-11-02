@@ -1,18 +1,33 @@
+# app.R
+#
+# Copyright (C) 2017 Andrew Tarver
+# Author: Andrew Tarver (http://github.com/soitknows)
+# Style Guide: https://google.github.io/styleguide/Rguide.xml
+#
+# RLoLChamps
+#
+# Description: R Shiny app to compare League of Legends champion stats. Two 
+#     champions can be compared at a time. Patch version is also selectable.
+
 library(rjson)
 library(shiny)
 library(ggplot2)
 
+# Get list of patch versions.
 GetPatches <- function (){
   vers_url <- "https://ddragon.leagueoflegends.com/api/versions.json"
   versions <- fromJSON(file = vers_url)
+  # Extract only the valid patch versions, e.g. exclude ones prefixed with lolpatch.
   versions <- versions[!grepl("lolpatch", versions)]
 }
 
+# Get champion data for specific patch version.
 GetPatchData <- function (patch) {
     url_beg <- "http://ddragon.leagueoflegends.com/cdn/"
     url_end <- "/data/en_US/champion.json"
     url <- paste(url_beg, patch, url_end, sep = "")
     data <- fromJSON(file = url)
+    # Extract the data node where each champ's base stats are stored.
     data <- data[['data']]
 }
 
@@ -36,6 +51,7 @@ GetChampData <- function (patchdata) {
     # Bind rows to final data frame to complete construction.
     champdata <- rbind(champdata, newdata)
   }
+  # Unlist each column to aid in plotting.
   champdata$champ <- unlist(champdata$champ)
   champdata$category <- unlist(champdata$category)
   champdata$value <- unlist(champdata$value)
@@ -43,8 +59,11 @@ GetChampData <- function (patchdata) {
   champdata
 }
 
+# Get list of patches for ui pick list.
 patches <- GetPatches()
+# Get patch data for most recent patch.
 currentpatch <- GetPatchData(patches[1])
+# Get list of champ names for pui pick list.
 champs <-  names(currentpatch)
 
 ui <- fluidPage(
@@ -71,6 +90,7 @@ server <- function (input, output) {
     champdata <- champdata[champdata$champ == input$champ1 | 
                              champdata$champ == input$champ2,]
   })
+  # Plot champ base statistic comparisons.
   output$stats_orig <- renderPlot({
     ggplot(data = df(), aes(category, value, shape = champ, color = champ, group = champ)) + 
       geom_point(size = 5) +
@@ -85,6 +105,7 @@ server <- function (input, output) {
                                 "Crit / Level", "Attack Damage", "Attack Damage / Level", 
                                 "Attack Speed Offset", "Attack Speed / Level"))
   })
+  # Plot log transformation of champ base statistic comparisons.
   output$stats_log <- renderPlot({
     ggplot(data = df(), aes(category, normalized, shape = champ, color = champ, group = champ)) + 
       geom_point(size = 5) +
