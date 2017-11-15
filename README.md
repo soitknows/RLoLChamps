@@ -4,6 +4,8 @@
 
 [R Shiny](https://shiny.rstudio.com/) app to compare [League of Legends](http://na.leagueoflegends.com) champion statistics. Two champions can be compared at a time, and patch version is also selectable.
 
+https://soitknows.shinyapps.io/rlolchamps/
+
 **Currently includes the following base champion statistics...**
 - Armor
 - Armor / Level
