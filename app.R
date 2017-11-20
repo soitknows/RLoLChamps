@@ -103,7 +103,9 @@ server <- function (input, output) {
                                 "Range", "Health Regen", "Health Regen / Level", 
                                 "Mana Regen", "Mana Regen / Level", "Crit", 
                                 "Crit / Level", "Attack Damage", "Attack Damage / Level", 
-                                "Attack Speed Offset", "Attack Speed / Level"))
+                                "Attack Speed Offset", "Attack Speed / Level")) +
+      labs(title = "Champion Statistics", x = NULL, y = NULL) +
+      theme(legend.title=element_blank())
   })
   # Plot log transformation of champ base statistic comparisons.
   output$stats_log <- renderPlot({
@@ -118,7 +120,9 @@ server <- function (input, output) {
                                 "Range", "Health Regen", "Health Regen / Level", 
                                 "Mana Regen", "Mana Regen / Level", "Crit", 
                                 "Crit / Level", "Attack Damage", "Attack Damage / Level", 
-                                "Attack Speed Offset", "Attack Speed / Level"))
+                                "Attack Speed Offset", "Attack Speed / Level")) +
+      labs(title = "Champion Statistics (Log Transformation)", x = NULL, y = NULL) +
+      theme(legend.title=element_blank())
   })
 }
 
